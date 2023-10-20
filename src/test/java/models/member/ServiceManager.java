@@ -14,12 +14,13 @@ public class ServiceManager {
         return instance;
     }
 
-    public MemberDao memberDao() {
-        return new MemberDao();
-    }
+    public MemberDao memberDao() { return new MemberDao(); }
 
     public JoinValidator joinValidator() {
-        return new JoinValidator();
+        JoinValidator validator = new JoinValidator();
+        validator.setMemberDao(memberDao());
+
+        return validator;
     }
 
     public JoinService joinService() {
