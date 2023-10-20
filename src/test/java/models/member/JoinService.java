@@ -1,9 +1,9 @@
 package models.member;
 
+import commons.BadRequestException;
 import commons.Validator;
 
 public class JoinService {
-
     private Validator validator;
     private MemberDao memberDao;
 
