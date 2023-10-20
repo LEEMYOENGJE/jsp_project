@@ -1,17 +1,30 @@
 package tests;
 
 import commons.BadRequestException;
+import jakarta.servlet.http.HttpServletRequest;
 import models.member.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.given;
 
 @DisplayName("회원가입 기능 단위테스트")
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.WARN)
 public class JoinServiceTest {
 
+
     private JoinService joinService;
+
+    @Mock
+    private HttpServletRequest request;
 
     @BeforeEach
     void init() {
@@ -35,8 +48,23 @@ public class JoinServiceTest {
     @DisplayName("회원가입 성공시 예외발생하지 않음")
     void joinSuccess() {
         assertDoesNotThrow(() -> {
+
             joinService.join(getMember());
         });
+    }
+
+    @Test
+    @DisplayName("HttpServletRequest 요청 데이터로 성공 테스트")
+    void joinSuccessByRequest() {
+        Member member = getMember();
+        given(request.getParameter("userId")).willReturn(member.getUserId());
+        given(request.getParameter("userPw")).willReturn(member.getUserPw());
+        given(request.getParameter("confirmUserPw")).willReturn(member.getConfirmUserPw());
+        given(request.getParameter("userNm")).willReturn(member.getUserNm());
+        given(request.getParameter("email")).willReturn(member.getEmail());
+        given(request.getParameter("agree")).willReturn("" + member.isAgree());
+
+        joinService.join(request);
     }
 
     @Test
@@ -137,16 +165,17 @@ public class JoinServiceTest {
 
         assertTrue(thrown.getMessage().contains("비밀번호가 일치"));
     }
+
     @Test
     @DisplayName("중복 가입 체크, 중복 가입인 경우 DuplicateMemberException 발생")
     void duplicateJoinCheck() {
         assertThrows(DuplicateMemberException.class, () -> {
-           Member member = getMember();
-           String userPw = member.getUserPw();
-           joinService.join(member);
+            Member member = getMember();
+            String userPw = member.getUserPw();
+            joinService.join(member);
 
-           member.setUserPw(userPw);
-           joinService.join(member);
+            member.setUserPw(userPw);
+            joinService.join(member);
         });
     }
 }

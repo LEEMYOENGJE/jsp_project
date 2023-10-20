@@ -1,20 +1,28 @@
 package models.member;
 
+import commons.Validator;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 public class LoginService {
-    public void login(HttpServletRequest request) {
+
+    private Validator<HttpServletRequest> validator;
+
+    private MemberDao memberDao;
+
+    public LoginService(Validator<HttpServletRequest> validator, MemberDao memberDao) {
+        this.validator = validator;
+        this.memberDao = memberDao;
     }
 
-    private Member getMember() {
-        String userPw = "12345678";
-        return Member.builder()
-                .userId("user" + System.currentTimeMillis())
-                .userPw(userPw)
-                .confirmUserPw(userPw)
-                .userNm("사용자")
-                .email("user@test.org")
-                .agree(true)
-                .build();
+    public void login(HttpServletRequest request) {
+
+        validator.check(request);
+
+        // 로그인 처리
+        String userId = request.getParameter("userId");
+        Member member = memberDao.get(userId);
+        HttpSession session = request.getSession();
+        session.setAttribute("member",member);
     }
 }

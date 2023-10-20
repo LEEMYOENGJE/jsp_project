@@ -2,6 +2,7 @@ package tests;
 
 import commons.BadRequestException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import models.member.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,20 +22,25 @@ import static org.mockito.BDDMockito.*;
 public class LoginServiceTest {
 
     private LoginService loginService;
+
     @Mock
     private HttpServletRequest request;
+
+    @Mock
+    private HttpSession session;
 
     private Member member;
 
     @BeforeEach
     void init() {
-        loginService = new LoginService();
+        loginService = ServiceManager.getInstance().loginService();
 
         member = getMember();
         JoinService joinService = ServiceManager.getInstance().joinService();
         joinService.join(member);
-    }
 
+        given(request.getSession()).willReturn(session);
+    }
 
     private Member getMember() {
         String userPw = "12345678";
@@ -61,20 +67,21 @@ public class LoginServiceTest {
             loginService.login(request);
         });
     }
+
     @Test
     @DisplayName("필수 항목 검증(아이디, 비밀번호), 검증 실패시 BadRequestException 발생")
     void requiredFieldCheck() {
         assertAll(
                 () -> {
                     // 아이디 검증
-                    createRequestData(null,member.getUserPw());
+                    createRequestData(null, member.getUserPw());
                     fieldEachCheck(request, "아이디");
 
-                    createRequestData("   ", member.getUserPw());
+                    createRequestData("  ", member.getUserPw());
                     fieldEachCheck(request, "아이디");
                 },
                 () -> {
-                    //비밀번호 검증
+                    // 비밀번호 검증
                     createRequestData(member.getUserId(), null);
                     fieldEachCheck(request, "비밀번호");
 
@@ -91,5 +98,14 @@ public class LoginServiceTest {
 
         assertTrue(thrown.getMessage().contains(word));
 
+    }
+
+    @Test
+    @DisplayName("아이디에 해당하는 회원 정보가 있는지 체크, 검증 실패시 MemberNotFoundException")
+    void memberExistsCheck() {
+        assertThrows(MemberNotFoundException.class, () -> {
+            createRequestData(member.getUserId() + "**", member.getUserPw());
+            loginService.login(request);
+        });
     }
 }
