@@ -1,7 +1,10 @@
 package tests;
 
+import commons.BedRequestException;
 import models.member.JoinService;
+import models.member.JoinValidator;
 import models.member.Member;
+import models.member.MemberDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +18,7 @@ public class JoinServiceTest {
 
     @BeforeEach
     void init() {
-        joinService = new JoinService();
+        joinService = new JoinService(new JoinValidator(), new MemberDao());
     }
 
     private Member getMember() {
@@ -34,6 +37,21 @@ public class JoinServiceTest {
     void joinSuccess() {
         assertDoesNotThrow(() -> {
             joinService.join(getMember());
+        });
+    }
+
+    @Test
+    @DisplayName("필수 항목 검증(아이디, 비밀번호, 비밀번호 확인, 회원명, 이메일, 회원가입약관 동의), 검증 실패시BedRequestExceptiong")
+    void requiredFieldCheck() {
+        // 아이디(userId)가 null 또는 빈값("")
+        assertThrows(BedRequestException.class, () ->{
+            Member member = getMember();
+
+            member.setUserId(null);
+            joinService.join(member);
+
+            member.setUserId("  ");
+            joinService.join(member);
         });
     }
 }
